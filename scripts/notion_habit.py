@@ -70,8 +70,6 @@ class NotionHabitUtils:
         console_stream.setFormatter(format)
         self.logger.addHandler(console_stream)
 
-        
-    
     def response_error(self,response):
         if not response.ok: # api call error
             error_msg = response.json()["message"]
@@ -101,7 +99,6 @@ class NotionHabitUtils:
         except requests.exceptions.ConnectionError: # no internet connection
             self.logger.error("no internet connection")
             return None 
-        
         # no database id found
         return response
     
@@ -111,6 +108,7 @@ class NotionHabitUtils:
         """
         habit_list = []
         result = self.query_habit().json()["results"]
+        self.logger.debug(result)
         for habit in result:
             habit_name = habit["properties"]["Name"]["title"][0]["text"]["content"] 
             if habit_name not in habit_list:
@@ -142,16 +140,14 @@ class NotionHabitUtils:
     
     def log_json(self):
         """
-        log json of all habit in calendar database  
+        store all log output in txt file 
         """
-        #today_date = today_date = date.fromtimestamp(time.time()).isoformat()
         time_now = time.strftime("%Y-%m-%d %H.%M.%S", time.localtime())
         file_name = f"C:\\Users\\TOSHIBA\\Desktop\\rest\\logs\\notion-habit {time_now}.txt"
         file_stream = logging.FileHandler(filename=file_name)
         format = logging.Formatter("%(asctime)s  [%(levelname)-5.5s]  %(message)s")
         file_stream.setFormatter(format)
         self.logger.addHandler(file_stream)
-        self.logger.debug(self.query_habit().json())
 
 
 class NotionHabitAnalyzer(NotionHabitUtils):
@@ -161,16 +157,38 @@ class NotionHabitAnalyzer(NotionHabitUtils):
     def __init__(self, log_level=logging.WARNING) -> None:
         super().__init__(log_level)
     
-    def analyze_habit(self,duration,habit):
+    def analyze_habit(self,habit,duration="0"):
         """
-        duration: string value "week" / "month" 
+        duration: string value 0 - this week , 1 - past week , 2 - past month , 3 - past year
         habit: string value of habit name
         """
-
-        filter =  {} #filter duration and habit
-        result = self.query_habit(filter).json()["results"]
-        completed = 0
+        duration_list = ["this week","past week","past month","past year"]
+        add_filter =  [{"property":"Name","rich_text":{"contains":habit}}] #filter date and habit
+        try:
+            self.logger.info(f"Analyze {habit} for {duration_list[int(duration)]}") 
+            add_filter.append({"property":"Date","date":{duration_list[int(duration)].replace(" ","_"):{}}})
+        except IndexError:
+            self.logger.error("duration not in range")
+            return
+            
+        result = self.query_habit(add_filter).json()["results"]
+        done = 0
         failed = 0
-        for habit in result:
-            pass
+        todo = 0
+        count = 0
+        for habit_json in result:
+            habit = NotionHabit()
+            habit.parse_json(habit_json)
+            status = habit.get_status()
+            if status == "Done":
+                done += 1
+            elif status == "Failed":
+                failed += 1
+            elif status == "To-Do":
+                todo += 1
+            else:
+                self.logger.warning(f"Unknown tag : {status} date: {habit.get_date()}")
+            count += 1
+        return done,failed,todo,count
+        
 
