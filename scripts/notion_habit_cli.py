@@ -1,11 +1,22 @@
-import notion_habit
+from notion_habit import NotionHabitUtils,NotionHabitAnalyzer
 import argparse
 import logging
+import time
 
-class NotionHabitCLI (notion_habit.NotionHabitAnalyzer):
+class NotionHabitCLI ():
     def __init__(self) -> None:
-        super().__init__()
+        self.logger = None
+        self.utils = None
+        self.analyzer = None
         self.parser =  None
+    
+    def create_logger(self,log_level=logging.INFO):
+        self.logger = logging.Logger("NotionHabitUtils")
+        self.logger.setLevel(log_level)
+        format = logging.Formatter("%(asctime)s  [%(levelname)-5.5s]  %(message)s")
+        console_stream = logging.StreamHandler()
+        console_stream.setFormatter(format)
+        self.logger.addHandler(console_stream)
         
     def create_parser(self):
         self.parser = argparse.ArgumentParser(
@@ -17,41 +28,37 @@ class NotionHabitCLI (notion_habit.NotionHabitAnalyzer):
         self.parser.add_argument("-l","--list",action="store_true",help="list Notion Habits")
         self.parser.add_argument("-L", "--log",action="store_true",help="store logging information in txt file")
         self.parser.add_argument("-u","--update",action="store_true",help="update overdued Notion Habits")
-        self.parser.add_argument("-v","--verbose",action="store_true",help="provide info logging information")
-        self.parser.add_argument("-vd","--verbose_debug",action="store_true",help="provide debug logging information")
+        self.parser.add_argument("-v","--verbose",action="store_true",help="provide debug logging information")
     
-    def generate_analyze_table(self,done,failed,todo,total):
-        count = [str(int(i)).ljust(6) for i in [done,failed,todo]]
-        rate = [str(int(i)).ljust(6) for i in [done/total*100,failed/total*100,todo/total*100]]
-        table = f"\
-            \n+--------------------------+\
-            \n|          Result          |\
-            \n+--------------------------+\
-            \n|Stats| Done |Failed|To-Do |\
-            \n+--------------------------+\
-            \n|Count|{count[0]}|{count[1]}|{count[2]}|\
-            \n+--------------------------+\
-            \n|Rate |{rate[0]}|{rate[1]}|{rate[2]}|\
-            \n+--------------------------+"
-        return table
+    def log_json(self):
+        """
+        store all log output in txt file 
+        """
+        time_now = time.strftime("%Y-%m-%d %H.%M.%S", time.localtime())
+        file_name = f"C:\\Users\\TOSHIBA\\Desktop\\rest\\logs\\notion-habit {time_now}.txt"
+        file_stream = logging.FileHandler(filename=file_name)
+        format = logging.Formatter("%(asctime)s  [%(levelname)-5.5s]  %(message)s")
+        file_stream.setFormatter(format)
+        self.logger.addHandler(file_stream)
         
     def run(self):
+        self.create_logger()
         self.create_parser()
+        self.utils = NotionHabitUtils(self.logger)
+        self.analyzer = NotionHabitAnalyzer(self.logger,self.utils)
         args = self.parser.parse_args()
         if args.verbose:
-            self.logger.setLevel(logging.INFO)
-        if args.verbose_debug:
             self.logger.setLevel(logging.DEBUG)
         if args.log:
             self.log_json()
         if args.list:
-            self.logger.info(f"Habits: {self.unique_habit()}")
+            self.logger.info(f"Habits: {self.utils.unique_habit()}")
         if args.update:
-            self.update_habit()
+            self.utils.update_habit()
         if args.analyze:
-            for habit in self.unique_habit():
-                done,failed,todo,count = self.analyze_habit(habit,args.duration)
-                self.logger.info(self.generate_analyze_table(done,failed,todo,count))
+            for habit in self.utils.unique_habit():
+                done,failed,todo,count = self.analyzer.analyze_habit(habit,args.duration)
+                self.logger.info(self.analyzer.generate_analyze_table(done,failed,todo,count))
         
         
 if __name__ == "__main__":

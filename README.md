@@ -32,18 +32,25 @@ classDiagram
     }
     
     class NotionHabitAnalyzer{
+        logging.Logger logger
+        NotionHabitUtils utils
         analyze_habit()
+        generate_analyze_table()
     }
 
     class NotionHabitCLI{
         argparse.ArgumentParser parser
-        generate_analyzer_table()
+        logging.Logger logger
+        NotionHabitAnalyzer analyzer
+        NotionHabitUtils utils
         create_parser()
         run()
     }
 
-    NotionHabitUtils <|-- NotionHabitAnalyzer
-    NotionHabitAnalyzer <|-- NotionHabitCLI
+    class NotionHabitQT{
+
+    }
+
 ```
 
 

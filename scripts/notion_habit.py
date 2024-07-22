@@ -6,7 +6,6 @@ import notion_secret as notion_secret
 import requests
 from datetime import date
 import time
-import logging
 
 header_data = {"Authorization":f"Bearer {notion_secret.SECRETS}" \
                 ,"Notion-Version":"2022-06-28","Content-Type":"application/json"}
@@ -62,13 +61,8 @@ class NotionHabitUtils:
     """
     utility class for commonly-used functionalities
     """
-    def __init__(self,log_level=logging.WARNING) -> None:
-        self.logger = logging.Logger("NotionHabitUtils")
-        self.logger.setLevel(log_level)
-        format = logging.Formatter("%(asctime)s  [%(levelname)-5.5s]  %(message)s")
-        console_stream = logging.StreamHandler()
-        console_stream.setFormatter(format)
-        self.logger.addHandler(console_stream)
+    def __init__(self,logger) -> None:
+        self.logger = logger
 
     def response_error(self,response):
         if not response.ok: # api call error
@@ -138,24 +132,13 @@ class NotionHabitUtils:
 
         self.logger.info(f"{update_count} Habit updated")
     
-    def log_json(self):
-        """
-        store all log output in txt file 
-        """
-        time_now = time.strftime("%Y-%m-%d %H.%M.%S", time.localtime())
-        file_name = f"C:\\Users\\TOSHIBA\\Desktop\\rest\\logs\\notion-habit {time_now}.txt"
-        file_stream = logging.FileHandler(filename=file_name)
-        format = logging.Formatter("%(asctime)s  [%(levelname)-5.5s]  %(message)s")
-        file_stream.setFormatter(format)
-        self.logger.addHandler(file_stream)
-
-
-class NotionHabitAnalyzer(NotionHabitUtils):
+class NotionHabitAnalyzer():
     """
     utility class for analyzing notion habits
     """
-    def __init__(self, log_level=logging.WARNING) -> None:
-        super().__init__(log_level)
+    def __init__(self, logger, utils) -> None:
+        self.utils = utils
+        self.logger = logger
     
     def analyze_habit(self,habit,duration="0"):
         """
@@ -171,7 +154,7 @@ class NotionHabitAnalyzer(NotionHabitUtils):
             self.logger.error("duration not in range")
             return
             
-        result = self.query_habit(add_filter).json()["results"]
+        result = self.utils.query_habit(add_filter).json()["results"]
         done = 0
         failed = 0
         todo = 0
@@ -190,5 +173,20 @@ class NotionHabitAnalyzer(NotionHabitUtils):
                 self.logger.warning(f"Unknown tag : {status} date: {habit.get_date()}")
             count += 1
         return done,failed,todo,count
+    
+    def generate_analyze_table(self,done,failed,todo,total):
+        count = [str(int(i)).ljust(6) for i in [done,failed,todo]]
+        rate = [str(int(i)).ljust(6) for i in [done/total*100,failed/total*100,todo/total*100]]
+        table = f"\
+            \n+--------------------------+\
+            \n|          Result          |\
+            \n+--------------------------+\
+            \n|Stats| Done |Failed|To-Do |\
+            \n+--------------------------+\
+            \n|Count|{count[0]}|{count[1]}|{count[2]}|\
+            \n+--------------------------+\
+            \n|Rate |{rate[0]}|{rate[1]}|{rate[2]}|\
+            \n+--------------------------+"
+        return table
         
 
