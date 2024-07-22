@@ -52,13 +52,16 @@ class NotionHabitCLI ():
         if args.log:
             self.log_json()
         if args.list:
-            self.logger.info(f"Habits: {self.utils.unique_habit()}")
+            self.logger.info(f"Habits: {self.utils.unique_habit()}\n")
+            time.sleep(0.5)
         if args.update:
-            self.utils.update_habit()
+            self.logger.info(f"{self.utils.update_habit()} Habit updated\n")
+            time.sleep(0.5)
         if args.analyze:
             for habit in self.utils.unique_habit():
                 done,failed,todo,count = self.analyzer.analyze_habit(habit,args.duration)
-                self.logger.info(self.analyzer.generate_analyze_table(done,failed,todo,count))
+                self.logger.info(self.analyzer.generate_analyze_table(done,failed,todo,count)+"\n")
+                time.sleep(0.5)
         
         
 if __name__ == "__main__":

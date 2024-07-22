@@ -9,10 +9,10 @@ title: notion-habit classes
 classDiagram
 
     class NotionHabit{
-        String id_
-        String date_
-        String tags_
-        String status_
+        String _id
+        String _date
+        String _tags
+        String _status
         parse_json()
         update_status()
         get_name() 

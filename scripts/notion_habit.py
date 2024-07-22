@@ -1,16 +1,10 @@
 """
 python SDK for interfacing with notion habits in ZE JIE's notion workspace
 """
-from logging import WARNING
-import notion_secret as notion_secret
+import notion_config
 import requests
 from datetime import date
 import time
-
-header_data = {"Authorization":f"Bearer {notion_secret.SECRETS}" \
-                ,"Notion-Version":"2022-06-28","Content-Type":"application/json"}
-
-database_id = "55b6a971ea8c4281ad099cb536cb3d82" # Calendar id
 
 class NotionHabit:
     """
@@ -32,13 +26,14 @@ class NotionHabit:
         self._tags  = json["properties"]["Tags"]["multi_select"][0]["name"]
         self._status = json["properties"]["Status"]["select"]["name"]
     
-    def update_status(self,status): # To-Do , Failed 
+    def update_status(self,status):
         """
         status : string ("To-Do" / "Failed" / "Done")
+        return: response
         """
         api_url = f"https://api.notion.com/v1/pages/{self._id}"
         json_data = {"properties":{"Status":{"select":{"name":f"{status}"}}}}
-        response = requests.patch(api_url,headers=header_data,json = json_data)
+        response = requests.patch(api_url,headers=notion_config.header_data,json = json_data)
         return response
 
     # getter functions for public use
@@ -76,8 +71,9 @@ class NotionHabitUtils:
         """
         get json object of filtered notion habits
         add_filter : list of dictionaries  
+        return response
         """
-        api_url = f"https://api.notion.com/v1/databases/{database_id}/query"
+        api_url = f"https://api.notion.com/v1/databases/{notion_config.database_id}/query"
         tag_filter = {"property": "Tags","multi_select":{"contains":"Habit"}}
         json_data = {"filter": None}
         if add_filter == None:
@@ -88,7 +84,7 @@ class NotionHabitUtils:
             for filter in add_filter:
                 json_data["filter"]["and"].append(filter)
         try:
-            response = requests.post(api_url,headers= header_data,json = json_data)
+            response = requests.post(api_url,headers= notion_config.header_data,json = json_data)
             self.response_error(response)
         except requests.exceptions.ConnectionError: # no internet connection
             self.logger.error("no internet connection")
@@ -99,6 +95,7 @@ class NotionHabitUtils:
     def unique_habit(self):
         """
         get list of exisiting types of habits 
+        return: list habit_list
         """
         habit_list = []
         result = self.query_habit().json()["results"]
@@ -112,6 +109,7 @@ class NotionHabitUtils:
     def update_habit(self):
         """
         update habit status from To-Do to Failed for habits that have overdued 
+        return: int update_count
         """
         today_date = date.fromtimestamp(time.time()).isoformat()
         add_filter = [{"property":"Status","select":{"equals":"To-Do"}}]
@@ -130,7 +128,7 @@ class NotionHabitUtils:
                 self.response_error(response) 
                 update_count += 1
 
-        self.logger.info(f"{update_count} Habit updated")
+        return update_count
     
 class NotionHabitAnalyzer():
     """
@@ -144,6 +142,7 @@ class NotionHabitAnalyzer():
         """
         duration: string value 0 - this week , 1 - past week , 2 - past month , 3 - past year
         habit: string value of habit name
+        return int done,failed,todo,count
         """
         duration_list = ["this week","past week","past month","past year"]
         add_filter =  [{"property":"Name","rich_text":{"contains":habit}}] #filter date and habit
@@ -175,6 +174,9 @@ class NotionHabitAnalyzer():
         return done,failed,todo,count
     
     def generate_analyze_table(self,done,failed,todo,total):
+        """
+        return str table 
+        """
         count = [str(int(i)).ljust(6) for i in [done,failed,todo]]
         rate = [str(int(i)).ljust(6) for i in [done/total*100,failed/total*100,todo/total*100]]
         table = f"\
