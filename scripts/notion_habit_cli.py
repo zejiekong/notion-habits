@@ -2,6 +2,7 @@ from notion_habit import NotionHabitUtils,NotionHabitAnalyzer
 import argparse
 import logging
 import time
+import os
 
 class NotionHabitCLI ():
     def __init__(self) -> None:
@@ -35,7 +36,12 @@ class NotionHabitCLI ():
         store all log output in txt file 
         """
         time_now = time.strftime("%Y-%m-%d %H.%M.%S", time.localtime())
-        file_name = f"C:\\Users\\TOSHIBA\\Desktop\\rest\\logs\\notion-habit {time_now}.txt"
+        rest_dir_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+        log_dir_path = rest_dir_path + "\\logs"
+        if not os.path.exists(log_dir_path):
+            self.logger.info("Creating Log Folder")
+            os.makedirs(log_dir_path)
+        file_name = log_dir_path + f"\\notion-habit {time_now}.txt"
         file_stream = logging.FileHandler(filename=file_name)
         format = logging.Formatter("%(asctime)s  [%(levelname)-5.5s]  %(message)s")
         file_stream.setFormatter(format)
