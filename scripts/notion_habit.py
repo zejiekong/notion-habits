@@ -154,10 +154,7 @@ class NotionHabitAnalyzer():
             return
             
         result = self.utils.query_habit(add_filter).json()["results"]
-        done = 0
-        failed = 0
-        todo = 0
-        count = 0
+        done,failed,todo,count = 0,0,0,0
         for habit_json in result:
             habit = NotionHabit()
             habit.parse_json(habit_json)
@@ -177,6 +174,8 @@ class NotionHabitAnalyzer():
         """
         return str table 
         """
+        if total == 0:
+            total = 1 # arbitrary value for handling zero division
         count = [str(int(i)).ljust(6) for i in [done,failed,todo]]
         rate = [str(int(i)).ljust(6) for i in [done/total*100,failed/total*100,todo/total*100]]
         table = f"\

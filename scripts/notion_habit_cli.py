@@ -11,7 +11,7 @@ class NotionHabitCLI ():
         self.parser =  None
     
     def create_logger(self,log_level=logging.INFO):
-        self.logger = logging.Logger("NotionHabitUtils")
+        self.logger = logging.Logger("NotionHabitCLI")
         self.logger.setLevel(log_level)
         format = logging.Formatter("%(asctime)s  [%(levelname)-5.5s]  %(message)s")
         console_stream = logging.StreamHandler()
@@ -21,7 +21,7 @@ class NotionHabitCLI ():
     def create_parser(self):
         self.parser = argparse.ArgumentParser(
             prog="NotionHabit",
-            description="this is a command line interface to run NotionHabitUtils functionalities",
+            description="this is a command line interface to run NotionHabit functionalities",
         )
         self.parser.add_argument("-a", "--analyze",action="store_true",help="statistics of habit tags")
         self.parser.add_argument("-d","--duration",action="store",help="specify duration for analyzer 0 - this week , 1 - past week , 2 - past month , 3 - past year")
