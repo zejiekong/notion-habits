@@ -1,4 +1,4 @@
-from notion_habit import NotionHabitUtils,NotionHabitAnalyzer
+from notion import notion_habit
 import argparse
 import logging
 import time
@@ -50,8 +50,8 @@ class NotionHabitCLI ():
     def run(self):
         self.create_logger()
         self.create_parser()
-        self.utils = NotionHabitUtils(self.logger)
-        self.analyzer = NotionHabitAnalyzer(self.logger,self.utils)
+        self.utils = notion_habit.NotionHabitUtils(self.logger)
+        self.analyzer = notion_habit.NotionHabitAnalyzer(self.logger,self.utils)
         args = self.parser.parse_args()
         if args.verbose:
             self.logger.setLevel(logging.DEBUG)

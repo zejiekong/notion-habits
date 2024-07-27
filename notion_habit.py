@@ -1,10 +1,10 @@
 """
 python SDK for interfacing with notion habits in ZE JIE's notion workspace
 """
-import notion_config
 import requests
 from datetime import date
 import time
+from notion import notion_config
 
 class NotionHabit:
     """
